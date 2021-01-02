@@ -2,14 +2,17 @@ module Api
   module V1
     class MeetingsController < ApplicationController
       def index
-        render json: Meeting.all
+        meetings = Meeting.all
+
+        render json: MeetingsRepresenter.new(meetings).as_json
       end
 
-      def create_table
-        meeting = Meeting.new(meeting_params)
+      def create
+        author = Author.create!(author_params)
+        meeting = Meeting.new(meeting_params.merge(author_id: author.id))
 
         if meeting.save
-          render json: meeting, status: :created
+          render json: MeetingRepresenter.new(meeting).as_json, status: :created
         else
           render json: meeting.errors, status: :unprocessable_entity
         end
@@ -23,8 +26,12 @@ module Api
 
       private
 
-      def book_params
-        params.require(:meeting).permit(:title, :author)
+      def meeting_params
+        params.require(:meeting).permit(:title)
+      end
+
+      def author_params
+        params.require(:author).permit(:first_name, :last_name, :section)
       end
 
     end
