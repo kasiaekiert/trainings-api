@@ -1,8 +1,10 @@
 module Api 
   module V1
     class MeetingsController < ApplicationController
+      MAX_PAGINATION_LIMIT = 100
+
       def index
-        meetings = Meeting.all
+        meetings = Meeting.limit(limit).offset(params[:offset])
 
         render json: MeetingsRepresenter.new(meetings).as_json
       end
@@ -25,6 +27,13 @@ module Api
       end
 
       private
+
+      def limit
+        [
+          params.fetch(:limit, MAX_PAGINATION_LIMIT).to_i,
+          MAX_PAGINATION_LIMIT
+        ].min
+      end
 
       def meeting_params
         params.require(:meeting).permit(:title)

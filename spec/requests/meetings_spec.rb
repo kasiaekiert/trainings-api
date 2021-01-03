@@ -7,8 +7,8 @@ describe 'Meetings API', type: :request do
     
     describe 'GET /meetings' do
     before do
-      FactoryBot.create(:meeting, title: '123', author: first_author)
-      FactoryBot.create(:meeting, title: '12443', author: second_author)
+      FactoryBot.create(:meeting, title: 'cardio', author: first_author)
+      FactoryBot.create(:meeting, title: 'strength training', author: second_author)
     end
 
     it 'returns all meetings' do
@@ -16,7 +16,73 @@ describe 'Meetings API', type: :request do
 
       expect(response).to have_http_status(:success)
       expect(response_body.size).to eq(2)
+      expect(response_body).to eq(
+        [
+          {
+            'id' => 1,
+            'title' => 'cardio',
+            'author_first_name' => 'Adam',
+            'author_last_name' => 'Kowalski',
+            'author_name' => 'AdamKowalski',
+            'author_section' => 'cardio'
+          },
+          {
+            'id' => 2,
+            'title' => 'strength training',
+            'author_first_name' => 'Tomasz',
+            'author_last_name' => 'Nowak',
+            'author_name' => 'TomaszNowak',
+            'author_section' => 'strength training'
+          }
+        ]
+      )
     end
+
+    it 'returns a subset of meetings based on limit' do
+      get '/api/v1/meetings', params: { limit: 1 }
+
+      expect(response).to have_http_status(:success)
+      expect(response_body.size).to eq(1)
+      expect(response_body).to eq(
+        [
+          {
+            'id' => 1,
+            'title' => 'cardio',
+            'author_first_name' => 'Adam',
+            'author_last_name' => 'Kowalski',
+            'author_name' => 'AdamKowalski',
+            'author_section' => 'cardio'
+          }
+        ]
+      )
+    end
+
+    it 'returns a subset of meetings based on limit and offset' do
+      get '/api/v1/meetings', params: { limit: 1, offset: 1 }
+
+      expect(response).to have_http_status(:success)
+      expect(response_body.size).to eq(1)
+      expect(response_body).to eq(
+        [
+         {
+        'id' => 2,
+        'title' => 'strength training',
+        'author_first_name' => 'Tomasz',
+        'author_last_name' => 'Nowak',
+        'author_name' => 'TomaszNowak',
+        'author_section' => 'strength training'
+        }
+      ]
+    )
+    end
+
+    it 'has a max limit of 100' do 
+      expect(Meeting).to receive(:limit).with(100).and_call_original
+
+      get '/api/v1/meetings', params: { limit: 999 }
+
+    end
+
   end
 
   describe 'POST /meetings' do
